@@ -1,4 +1,4 @@
-import type { FastifyInstance } from "fastify"
+import { Hono } from "hono"
 import { eq } from "drizzle-orm"
 import { registerSchema, loginSchema } from "@app/shared"
 import { db } from "../db"
@@ -12,44 +12,44 @@ const toPublic = (u: typeof users.$inferSelect) => ({
   createdAt: u.createdAt.toISOString(),
 })
 
-export async function authRoutes(app: FastifyInstance) {
-  app.post("/auth/register", async (req, reply) => {
-    const parsed = registerSchema.safeParse(req.body)
-    if (!parsed.success) return reply.code(400).send({ error: parsed.error.flatten() })
-    const { email, password, displayName } = parsed.data
+export const authRoutes = new Hono()
 
-    const existing = await db.select().from(users).where(eq(users.email, email))
-    if (existing.length) return reply.code(409).send({ error: "Email zaten kayıtlı" })
+authRoutes.post("/register", async (c) => {
+  const parsed = registerSchema.safeParse(await c.req.json().catch(() => null))
+  if (!parsed.success) return c.json({ error: parsed.error.flatten() }, 400)
+  const { email, password, displayName } = parsed.data
 
-    const passwordHash = await hashPassword(password)
-    const [user] = await db
-      .insert(users)
-      .values({ email, passwordHash, displayName })
-      .returning()
-    return reply.send({ token: signToken(user.id), user: toPublic(user) })
-  })
+  const existing = await db.select().from(users).where(eq(users.email, email))
+  if (existing.length) return c.json({ error: "Email zaten kayıtlı" }, 409)
 
-  app.post("/auth/login", async (req, reply) => {
-    const parsed = loginSchema.safeParse(req.body)
-    if (!parsed.success) return reply.code(400).send({ error: parsed.error.flatten() })
-    const { email, password } = parsed.data
+  const passwordHash = await hashPassword(password)
+  const [user] = await db
+    .insert(users)
+    .values({ email, passwordHash, displayName })
+    .returning()
+  return c.json({ token: signToken(user.id), user: toPublic(user) })
+})
 
-    const [user] = await db.select().from(users).where(eq(users.email, email))
-    if (!user || !(await verifyPassword(password, user.passwordHash)))
-      return reply.code(401).send({ error: "Geçersiz email veya şifre" })
-    return reply.send({ token: signToken(user.id), user: toPublic(user) })
-  })
+authRoutes.post("/login", async (c) => {
+  const parsed = loginSchema.safeParse(await c.req.json().catch(() => null))
+  if (!parsed.success) return c.json({ error: parsed.error.flatten() }, 400)
+  const { email, password } = parsed.data
 
-  app.get("/auth/me", async (req, reply) => {
-    const auth = req.headers.authorization
-    if (!auth?.startsWith("Bearer ")) return reply.code(401).send({ error: "Token yok" })
-    try {
-      const { sub } = verifyToken(auth.slice(7))
-      const [user] = await db.select().from(users).where(eq(users.id, sub))
-      if (!user) return reply.code(401).send({ error: "Kullanıcı bulunamadı" })
-      return reply.send({ user: toPublic(user) })
-    } catch {
-      return reply.code(401).send({ error: "Geçersiz token" })
-    }
-  })
-}
+  const [user] = await db.select().from(users).where(eq(users.email, email))
+  if (!user || !(await verifyPassword(password, user.passwordHash)))
+    return c.json({ error: "Geçersiz email veya şifre" }, 401)
+  return c.json({ token: signToken(user.id), user: toPublic(user) })
+})
+
+authRoutes.get("/me", async (c) => {
+  const auth = c.req.header("authorization")
+  if (!auth?.startsWith("Bearer ")) return c.json({ error: "Token yok" }, 401)
+  try {
+    const { sub } = verifyToken(auth.slice(7))
+    const [user] = await db.select().from(users).where(eq(users.id, sub))
+    if (!user) return c.json({ error: "Kullanıcı bulunamadı" }, 401)
+    return c.json({ user: toPublic(user) })
+  } catch {
+    return c.json({ error: "Geçersiz token" }, 401)
+  }
+})

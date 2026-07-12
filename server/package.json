@@ -9,21 +9,21 @@
     "db:studio": "drizzle-kit studio"
   },
   "dependencies": {
-    "@app/shared": "*",
-    "@fastify/cors": "^9.0.1",
-    "bcrypt": "^5.1.1",
-    "drizzle-orm": "^0.33.0",
-    "fastify": "^4.28.1",
+    "@app/shared": "file:../packages/shared",
+    "@hono/node-server": "^1.13.7",
+    "bcryptjs": "^2.4.3",
+    "drizzle-orm": "^0.45.2",
+    "hono": "^4.6.14",
     "jsonwebtoken": "^9.0.2",
-    "pg": "^8.12.0",
+    "pg": "^8.13.1",
     "zod": "^3.23.8"
   },
   "devDependencies": {
-    "@types/bcrypt": "^5.0.2",
-    "@types/jsonwebtoken": "^9.0.6",
-    "@types/pg": "^8.11.6",
-    "drizzle-kit": "^0.24.0",
-    "tsx": "^4.16.2",
-    "typescript": "^5.5.4"
+    "@types/bcryptjs": "^2.4.6",
+    "@types/jsonwebtoken": "^9.0.7",
+    "@types/pg": "^8.11.10",
+    "drizzle-kit": "^0.31.10",
+    "tsx": "^4.19.2",
+    "typescript": "^5.7.2"
   }
 }
