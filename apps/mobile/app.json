@@ -1,0 +1,14 @@
+{
+  "expo": {
+    "name": "FoodApp",
+    "slug": "foodapp",
+    "scheme": "foodapp",
+    "version": "0.0.1",
+    "orientation": "portrait",
+    "userInterfaceStyle": "dark",
+    "newArchEnabled": true,
+    "web": { "bundler": "metro", "output": "single" },
+    "plugins": ["expo-router", "expo-secure-store"],
+    "experiments": { "typedRoutes": true }
+  }
+}
