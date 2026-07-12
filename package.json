@@ -1,0 +1,5 @@
+{
+  "name": "reactnativewebgpu",
+  "private": true,
+  "workspaces": ["apps/*", "packages/*", "server"]
+}
